@@ -8,8 +8,7 @@ source("functions_define.r")
 ref_organisms_benthic_unique <- ref_organisms_benthic %>%
     filter(!is.na(Organism)) %>%
     distinct(Organism, AGRRA_Bucket)
-View(benthic_cover_presence)
-benthic_cover_presence <- df_benthic_pim %>%
+df_benthic_cover_presence <- df_benthic_pim %>%
     left_join(ref_organisms_benthic_unique %>% select(Organism, Organism_Bucket = AGRRA_Bucket), by = "Organism") %>%
     left_join(ref_organisms_benthic_unique %>% select(Organism, Secondary_Bucket = AGRRA_Bucket), by = c("Secondary" = "Organism")) %>%
     mutate(
@@ -19,12 +18,12 @@ benthic_cover_presence <- df_benthic_pim %>%
     )
 
 # Calculate live coral cover ---------------------------
-benthic_cover_presence_lcc <- benthic_cover_presence %>%
+df_benthic_cover_presence_lcc <- df_benthic_cover_presence %>%
     group_by(Year, Site, Transect) %>%
     mutate(Coral_Cover_Tran = 100 * sum(Coral_Presence) / n()) %>%
     group_by(Year, Site) %>%
     mutate(Coral_Cover_Site = mean(Coral_Cover_Tran))
-indicator_lcc <- benthic_cover_presence_lcc %>%
+df_benthic_lcc <- df_benthic_cover_presence_lcc %>%
     group_by(Year) %>%
     summarize(
         `Min (Site)` = min(Coral_Cover_Site),
@@ -37,7 +36,7 @@ indicator_lcc <- benthic_cover_presence_lcc %>%
         `Max (Transect)` = max(Coral_Cover_Tran)
     ) %>%
     mutate(across(-Year, ~ round(.x, 2)))
-indicator_lcc_sites <- benthic_cover_presence_lcc %>%
+df_benthic_lcc_sites <- df_benthic_cover_presence_lcc %>%
     group_by(Year, Site) %>%
     summarize(
         `Min (Transect)` = min(Coral_Cover_Tran),
@@ -47,12 +46,12 @@ indicator_lcc_sites <- benthic_cover_presence_lcc %>%
     )
 
 # Calculate macroalgae cover ---------------------------
-benthic_cover_presence_fma <- benthic_cover_presence %>%
+df_benthic_cover_presence_fma <- df_benthic_cover_presence %>%
     group_by(Year, Site, Transect) %>%
     mutate(Algae_Cover_Tran = 100 * sum(Algae_Presence) / n()) %>%
     group_by(Year, Site) %>%
     mutate(Algae_Cover_Site = mean(Algae_Cover_Tran))
-indicator_fma <- benthic_cover_presence_fma %>%
+df_benthic_fma <- df_benthic_cover_presence_fma %>%
     group_by(Year) %>%
     summarize(
         `Min (Site)` = min(Algae_Cover_Site),
@@ -65,7 +64,7 @@ indicator_fma <- benthic_cover_presence_fma %>%
         `Max (Transect)` = max(Algae_Cover_Tran)
     ) %>%
     mutate(across(-Year, ~ round(.x, 2)))
-indicator_fma_sites <- benthic_cover_presence_fma %>%
+df_benthic_fma_sites <- df_benthic_cover_presence_fma %>%
     group_by(Year, Site) %>%
     summarize(
         `Min (Transect)` = min(Algae_Cover_Tran),
