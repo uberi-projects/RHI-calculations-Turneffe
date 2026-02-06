@@ -1,8 +1,7 @@
 # data_attach.r
 
-## Load packages --------------------------------------
-library(rdryad)
-library(tidyverse)
+## Source code --------------------------------------
+source("packages_attach.r")
 
 ## Retrieve Turneffe AGRRA data from Dryad repository --------------------------------------
 if (dir.exists("data_deposit") && length(list.files("data_deposit")) > 0) {
