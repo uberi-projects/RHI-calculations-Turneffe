@@ -73,3 +73,36 @@ indicator_fma_sites <- benthic_cover_presence_fma %>%
         `Median (Transect)` = median(Algae_Cover_Tran),
         `Max (Transect)` = max(Algae_Cover_Tran)
     )
+
+# Calculate fish biomass ---------------------------
+df_fish_biomass_obs <- df_fish %>% # Observation-level
+    select(Year, Site, Transect, Fish_Scientific, Size_Class, Observations) %>%
+    left_join(ref_fish_species, by = "Fish_Scientific") %>%
+    left_join(ref_biomass, by = c("Fish_Scientific" = "Binomial")) %>%
+    mutate(Biomass_Observations = Observations * (LWRa * ((LWRconv * Size_Class)^LWRb))) %>%
+    mutate(Biomass_Category = case_when(
+        Family == "Acanthuridae" ~ "H",
+        Family == "Scaridae" ~ "H",
+        Family == "Epinephelidae" ~ "C",
+        Family == "Lutjanidae" ~ "C"
+    )) %>%
+    filter(!is.na(Biomass_Category))
+distinct_fish_transects <- distinct(select(df_fish, Year, Site, Transect))
+distinct_biomass_categories <- c("C", "H")
+df_fish_biomass_transect_incomplete <- df_fish_biomass_obs %>%
+    group_by(Year, Site, Transect, Biomass_Category) %>%
+    summarize(Biomass_Transects = sum(Biomass_Observations)) %>%
+    ungroup()
+df_fish_biomass_transect <- distinct_fish_transects %>% # Transect-level
+    tidyr::crossing(Biomass_Category = distinct_biomass_categories) %>%
+    left_join(
+        df_fish_biomass_transect_incomplete,
+        by = c("Year", "Site", "Transect", "Biomass_Category")
+    ) %>%
+    mutate(
+        Biomass_Transects = tidyr::replace_na(Biomass_Transects, 0),
+        Biomass_Transects_Density = 100 * Biomass_Transects / (2 * 30)
+    )
+df_fish_biomass_site <- df_fish_biomass_transect %>% # Transect-level
+    group_by(Year, Site, Biomass_Category) %>%
+    summarize(Biomass_Sites_Density = mean(Biomass_Transects_Density))
